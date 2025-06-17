@@ -1,103 +1,174 @@
-import Image from "next/image";
+'use client';
+import { useState, useRef } from 'react';
+import Editor from '@monaco-editor/react';
+import { Copy, Code, Share2, Plus, X, FileText } from 'lucide-react';
 
-export default function Home() {
+export default function CodeSharingApp() {
+  const [files, setFiles] = useState([
+    { id: 1, name: 'script.js', language: 'javascript', code: '// Your JavaScript code here' },
+    { id: 2, name: 'style.css', language: 'css', code: '/* Your CSS here */' },
+    { id: 3, name: 'index.html', language: 'html', code: '<!-- Your HTML here -->' }
+  ]);
+  const [activeFile, setActiveFile] = useState(1);
+  const [shareUrl, setShareUrl] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
+  const editorRef = useRef(null);
+
+  const languages = [
+    { value: 'javascript', label: 'JavaScript' },
+    { value: 'typescript', label: 'TypeScript' },
+    { value: 'html', label: 'HTML' },
+    { value: 'css', label: 'CSS' },
+    { value: 'python', label: 'Python' },
+    { value: 'java', label: 'Java' },
+  ];
+
+  function handleEditorDidMount(editor) {
+    editorRef.current = editor;
+  }
+
+  function handleCodeChange(value) {
+    setFiles(files.map(file => 
+      file.id === activeFile ? { ...file, code: value } : file
+    ));
+  }
+
+  function addNewFile() {
+    const newId = files.length > 0 ? Math.max(...files.map(f => f.id)) + 1 : 1;
+    setFiles([...files, {
+      id: newId,
+      name: `file-${newId}.js`,
+      language: 'javascript',
+      code: '// New file'
+    }]);
+    setActiveFile(newId);
+  }
+
+  function removeFile(id) {
+    if (files.length <= 1) return;
+    setFiles(files.filter(file => file.id !== id));
+    if (activeFile === id) {
+      setActiveFile(files[0].id);
+    }
+  }
+
+  function changeLanguage(id, language) {
+    setFiles(files.map(file => 
+      file.id === id ? { ...file, language } : file
+    ));
+  }
+
+  function generateShareUrl() {
+    // In a real app, you would send the code to your backend
+    // and get a unique URL. For demo, we'll just create a mock URL
+    const randomId = Math.random().toString(36).substring(2, 9);
+    const url = `${window.location.origin}/share/${randomId}`;
+    setShareUrl(url);
+    return url;
+  }
+
+  function copyToClipboard() {
+    navigator.clipboard.writeText(shareUrl || generateShareUrl());
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Code className="h-6 w-6 text-blue-600" />
+            <h1 className="text-xl font-bold text-gray-800">CodeShare</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={generateShareUrl}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </button>
+            {shareUrl && (
+              <div className="flex items-center bg-gray-100 rounded-md px-3 py-2">
+                <span className="text-sm text-gray-600 mr-2">{shareUrl}</span>
+                <button onClick={copyToClipboard} className="text-gray-500 hover:text-gray-700">
+                  <Copy className="h-4 w-4" />
+                </button>
+                {isCopied && <span className="ml-2 text-xs text-green-600">Copied!</span>}
+              </div>
+            )}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* File Tabs */}
+        <div className="bg-white border-b border-gray-200 px-4 flex items-center overflow-x-auto">
+          <div className="flex space-x-1">
+            {files.map(file => (
+              <div
+                key={file.id}
+                className={`flex items-center px-3 py-2 text-sm border-b-2 ${activeFile === file.id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              >
+                <button
+                  onClick={() => setActiveFile(file.id)}
+                  className="flex items-center"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  {file.name}
+                </button>
+                {files.length > 1 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removeFile(file.id); }}
+                    className="ml-2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={addNewFile}
+            className="ml-2 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Language Selector */}
+        <div className="bg-white px-4 py-2 border-b border-gray-200">
+          <select
+            value={files.find(f => f.id === activeFile)?.language || 'javascript'}
+            onChange={(e) => changeLanguage(activeFile, e.target.value)}
+            className="text-sm border border-gray-300 rounded px-3 py-1"
+          >
+            {languages.map(lang => (
+              <option key={lang.value} value={lang.value}>{lang.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Editor */}
+        <div className="flex-1">
+          <Editor
+            height="100%"
+            language={files.find(f => f.id === activeFile)?.language || 'javascript'}
+            value={files.find(f => f.id === activeFile)?.code || ''}
+            onChange={handleCodeChange}
+            onMount={handleEditorDidMount}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              wordWrap: 'on',
+              automaticLayout: true,
+            }}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+      </div>
     </div>
   );
 }
