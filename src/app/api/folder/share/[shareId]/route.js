@@ -1,40 +1,24 @@
 import { send_response } from "@/utils/apiResponse";
 import { codeFile } from "@/models/codeFile";
-import { asyncHandler } from "@/utils/asyncHandler";
 import { StatusCodes } from "@/helper/api/statusCode";
 import dbConnect from "@/lib/db";
 
-export const GET = asyncHandler(async (req, { params }) => {
+export const GET = async (request, { params }) => {
   try {
     await dbConnect();
 
     const { shareId } = params;
     console.log("shareId:", shareId);
 
-    const files = await codeFile.find({ shareId });
+    const file = await codeFile.findOne({ shareId });
 
-    if (!files || files.length === 0) {
-      return send_response(
-        false,
-        null,
-        "Files not found",
-        StatusCodes.NOT_FOUND
-      );
+    if (!file) {
+      return send_response(false, null, "File not found", StatusCodes.NOT_FOUND);
     }
 
-    return send_response(
-      true,
-      files,
-      "Files retrieved successfully",
-      StatusCodes.OK
-    );
+    return send_response(true, file, "File retrieved", StatusCodes.OK);
   } catch (error) {
-    console.error("Error in GET /api/folder/share/[shareId]:", error);
-    return send_response(
-      false,
-      null,
-      "Internal server error",
-      StatusCodes.INTERNAL_SERVER_ERROR
-    );
+    console.error("API Error:", error);
+    return send_response(false, null, "Internal Server Error", StatusCodes.INTERNAL_SERVER_ERROR);
   }
-});
+};

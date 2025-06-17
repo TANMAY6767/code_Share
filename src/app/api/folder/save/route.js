@@ -1,5 +1,4 @@
 import { send_response } from "@/utils/apiResponse";
-import Folder from "@/models/folder";  // Changed to default import
 import { codeFile } from "@/models/codeFile";
 import { asyncHandler } from "@/utils/asyncHandler";
 import { StatusCodes } from "@/helper/api/statusCode";
@@ -7,11 +6,11 @@ import dbConnect from "@/lib/db";
 
 export const POST = asyncHandler(async (req) => {
     await dbConnect();
-    const formData = await req.formData();
+     const body = await req.json();
     
-    const filename = formData.get("filename");
-    const language = formData.get("language");
-    const content = formData.get("content");
+    const filename = body.filename;
+    const language = body.language;
+    const content = body.content;
     
     if (!filename || !language) {
         return send_response(false, null, "filename and language are required!", StatusCodes.BAD_REQUEST);
