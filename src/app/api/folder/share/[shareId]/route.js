@@ -7,7 +7,7 @@ export const GET = async (request, { params }) => {
   try {
     await dbConnect();
 
-    const { shareId } = params;
+    const { shareId } = await params;
     console.log("shareId:", shareId);
 
     const file = await codeFile.findOne({ shareId });

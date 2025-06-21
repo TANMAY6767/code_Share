@@ -24,6 +24,12 @@ export const codeFileSchema = new Schema({
         trim: true,
         index: true
     },
+    type:{
+        type: String,
+        required: true,
+        enum: ['editable','read-only'],
+        default: 'editable'
+    }
     //   createdAt: {
     //     type: Date,
     //     default: Date.now

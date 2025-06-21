@@ -11,6 +11,8 @@ export const POST = asyncHandler(async (req) => {
     const filename = body.filename;
     const language = body.language;
     const content = body.content;
+    const type = body.type;
+    
     
     if (!filename || !language) {
         return send_response(false, null, "filename and language are required!", StatusCodes.BAD_REQUEST);
@@ -21,6 +23,7 @@ export const POST = asyncHandler(async (req) => {
     const newFile = new codeFile({
         filename,
         language,
+        type,
         content: content || '',
         shareId
     });
