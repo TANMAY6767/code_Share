@@ -40,7 +40,9 @@ const ShareModal = ({ onClose, shareId }) => {
   setError('');
   setSuccess('');
 
-  const slug = customUrl.trim().replace(/^http:\/\/localhost:3000\//, '');
+  const slug = new URL(customUrl).pathname.replace(/^\//, '');
+
+
 
   if (!slug) {
     setError('Please enter a custom URL');
