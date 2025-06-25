@@ -9,44 +9,62 @@ export const POST = asyncHandler(async (req) => {
     const body = await req.json();
     const { searchParams } = new URL(req.url);
     const shareId = searchParams.get('shareId');
-    
+
     console.log("shareId:", shareId);
-    
+
     const filename = body.filename;
     const language = body.language;
     const content = body.content;
     const type = body.type;
-    
+    const expiresIn = body.expiryTime; // Now using expiresIn instead of expiresAt
+
+    console.log("time:-",expiresIn);
+
     if (!filename || !language) {
         return send_response(false, null, "filename and language are required!", StatusCodes.BAD_REQUEST);
     }
 
     if (shareId) {
-        // Update existing file
+        const updateFields = {
+            filename,
+            language,
+            type,
+            content: content || '',
+            expiresIn
+        };
+
+
+        if (expiresIn) {
+            updateFields.expiresIn = expiresIn;
+
+        }
+
         const updatedFile = await codeFile.findOneAndUpdate(
             { shareId: shareId },
-            {
-                filename,
-                language,
-                type,
-                content: content || '',
-            },
+            updateFields,
             { new: true } // Return the updated document
         );
-        
+
         if (!updatedFile) {
             return send_response(false, null, "File not found", StatusCodes.NOT_FOUND);
         }
-        
-        const responseData = { 
-            shareId: updatedFile.shareId,
-            url: `http://localhost:3000/share/${updatedFile.shareId}` 
+
+        // In your route.js response:
+        const responseData = {
+            shareId: newFile.shareId,
+            url: `http://localhost:3000/share/${newFile.shareId}`,
+            expiresAt: new Date(newFile.expiresAt).toLocaleString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                dateStyle: 'full',
+                timeStyle: 'long'
+            }),
+            expiresIn: newFile.expiresIn
         };
-        
+
         return send_response(true, responseData, "File updated successfully", StatusCodes.OK);
     } else {
-        
-        
+
+
         return send_response(true, responseData, "send url", StatusCodes.BAD_REQUEST);
     }
 });

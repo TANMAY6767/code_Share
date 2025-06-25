@@ -1,35 +1,15 @@
 import mongoose, { Schema } from "mongoose";
 
-// Define schema
-export const codeFileSchema = new Schema({
-    filename: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    language: {
-        type: String,
-        required: true,
-        enum: ['javascript', 'typescript', 'html', 'css', 'python', 'java', 'cpp', 'csharp', 'php', 'ruby', 'go', 'rust', 'swift', 'kotlin'],
-        default: 'javascript'
-    },
-    content: {
-        type: String,
-        required: true,
-        default: ''
-    },
+const codeBlockSchema = new mongoose.Schema({
     shareId: {
         type: String,
+        required: true,
         unique: true,
-        trim: true,
         index: true
     },
-    type: {
-        type: String,
-        required: true,
-        enum: ['editable', 'read-only'],
-        default: 'editable'
-    },
+    filename: String,
+    content: String,
+     // Add index for faster lookups
     expiresIn: {
         type: String,
         enum: ['1m', '1h', '24h', '2d', '3d'], // Updated options
@@ -40,11 +20,9 @@ export const codeFileSchema = new Schema({
         required: true,
         default: () => new Date(Date.now() + 3600000) // 1 hour from now
     },
-    
 });
 
-// Middleware to calculate expiresAt based on expiresIn
-codeFileSchema.pre('save', function(next) {
+codeBlockSchema.pre('save', function(next) {
   const durationMap = {
     '1m': 60000,       // 1 minute
     '1h': 3600000,     // 1 hour
@@ -58,11 +36,16 @@ codeFileSchema.pre('save', function(next) {
   }
   next();
 });
-
-// TTL index for automatic expiration
-codeFileSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
-codeFileSchema.statics.generateShareId = async function () {
+// Add to codeBlockSchema
+codeBlockSchema.statics.updateContent = async function (shareId, content) {
+  return this.findOneAndUpdate(
+    { shareId },
+    { content },
+    { new: true, select: 'content' }
+  );
+};
+codeBlockSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+codeBlockSchema.statics.generateShareId = async function () {
     const generateId = () => Math.random().toString(36).substring(2, 10);
     let shareId = generateId();
     let exists = await this.findOne({ shareId });
@@ -74,5 +57,4 @@ codeFileSchema.statics.generateShareId = async function () {
 
     return shareId;
 };
-// Optional: Create model (for individual access)
-export const codeFile = mongoose.models.codeFile || mongoose.model("codeFile", codeFileSchema);
+export const CodeBlock = mongoose.models.CodeBlock || mongoose.model("CodeBlock", codeBlockSchema);

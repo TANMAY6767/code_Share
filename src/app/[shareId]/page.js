@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import SharedCodeViewer from '../../../components/SharedCode/SharedCodeViewer';
+import SharedCodeViewer from '../../components/SharedCode/SharedCodeViewer';
 
 export default function SharedCodePage() {
   const { shareId } = useParams();

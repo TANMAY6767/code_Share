@@ -1,5 +1,5 @@
 import { send_response } from "@/utils/apiResponse";
-import { codeFile } from "@/models/codeFile";
+import { CodeBlock } from "@/models/codeblock";
 import { asyncHandler } from "@/utils/asyncHandler";
 import { StatusCodes } from "@/helper/api/statusCode";
 import dbConnect from "@/lib/db";
@@ -9,24 +9,22 @@ export const POST = asyncHandler(async (req) => {
     const body = await req.json();
 
     const filename = body.filename;
-    const language = body.language;
+   
     const content = body.content;
-    const type = body.type;
+
     const expiresIn = body.expiresIn;
 
 
-    if (!filename || !language) {
+    if (!filename ) {
         return send_response(false, null, "filename and language are required!", StatusCodes.BAD_REQUEST);
     }
     if (expiresIn && !['1m', '1h', '24h', '2d', '3d'].includes(expiresIn)) {
     return send_response(false, null, "Invalid expiresIn value!", StatusCodes.BAD_REQUEST);
 }
     // Create the code file
-    const shareId = await codeFile.generateShareId();
-    const newFile = new codeFile({
+    const shareId = await CodeBlock.generateShareId();
+    const newFile = new CodeBlock({
         filename,
-        language,
-        type,
         content: content || '',
         shareId,
         expiresIn: expiresIn || '1h',
@@ -55,4 +53,4 @@ export const POST = asyncHandler(async (req) => {
 };
 
     return send_response(true, responseData, "Folder created successfully", StatusCodes.CREATED);
-});
+}); 
