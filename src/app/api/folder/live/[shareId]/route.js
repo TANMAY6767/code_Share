@@ -18,7 +18,8 @@ export const GET = asyncHandler(async (request, { params }) => {
     true, 
     {
       ...file.toObject(),
-      wsUrl: `ws://localhost:${process.env.WS_PORT || 3001}/api/live?shareId=${shareId}`
+     wsUrl: `${process.env.NEXT_PUBLIC_WS_URL}?shareId=${shareId}`
+
     },
     "File retrieved", 
      StatusCodes.OK,

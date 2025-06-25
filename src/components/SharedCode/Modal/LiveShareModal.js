@@ -3,8 +3,8 @@ import { faTimes, faCopy, faLink } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const ShareModal = ({ onClose, shareId }) => {
-  const [defaultUrl, setDefaultUrl] = useState(`http://localhost:3000/live/${shareId}`);
-  const [customUrl, setCustomUrl] = useState('http://localhost:3000/live/');
+  const [defaultUrl, setDefaultUrl] = useState(`${process.env.NEXT_PUBLIC_BASE_URL}/live/${shareId}`);
+  const [customUrl, setCustomUrl] = useState(`${process.env.NEXT_PUBLIC_BASE_URL}/live/`);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -63,7 +63,7 @@ const ShareModal = ({ onClose, shareId }) => {
     return;
   }
 
-  const defaultAlias = shareId; // because default URL = http://localhost:3000/shareId
+  const defaultAlias = shareId; // because default URL = ${process.env.NEXT_PUBLIC_BASE_URL}/shareId
   if (slug === defaultAlias) {
     setError('Custom alias cannot be the same as the default alias');
     return;
@@ -87,10 +87,10 @@ const ShareModal = ({ onClose, shareId }) => {
     }
 
     setSuccess('Custom URL generated successfully!');
-    setCustomUrl(`http://localhost:3000/live/${slug}`);
+    setCustomUrl(`${process.env.NEXT_PUBLIC_BASE_URL}/live/${slug}`);
 
     setTimeout(() => {
-      window.location.href = `http://localhost:3000/live/${slug}`;
+      window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/live/${slug}`;
     }, 1000);
   } catch (err) {
     setIsLoading(false);
@@ -188,7 +188,7 @@ const ShareModal = ({ onClose, shareId }) => {
                     className="flex-1 px-4 py-3 bg-gray-900 text-white border-2 border-gray-700 rounded-md font-mono text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
                     value={customUrl}
                     onChange={(e) => {
-                      const base = "http://localhost:3000/";
+                      const base = `${process.env.NEXT_PUBLIC_BASE_URL}/`;
                       const inputValue = e.target.value;
 
                       // Prevent deleting base

@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n NEXT,WS -c \"bgBlue.bold\" \"next dev\" \"node ws-server.js\"",
-    "build": "next build",
-    "start": "concurrently -n NEXT,WS -c \"bgBlue.bold\" \"next start\" \"node ws-server.js\"",
-    "lint": "next lint"
+    "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "next lint"
   },
   "dependencies": {
     "@fastify/websocket": "^11.1.0",

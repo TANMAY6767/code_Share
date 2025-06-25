@@ -18,7 +18,7 @@ const LiveEditor = ({ shareId, file, router }) => {
   useEffect(() => {
     if (!shareId) return;
 
-    const wsUrl = `ws://localhost:${process.env.NEXT_PUBLIC_WS_PORT || 3001}/api/live?shareId=${shareId}`;
+    const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}?shareId=${shareId}`;
     wsRef.current = new WebSocket(wsUrl);
 
     const handleMessage = (event) => {

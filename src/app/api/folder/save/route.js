@@ -45,7 +45,7 @@ export const POST = asyncHandler(async (req) => {
     // In your route.js response:
     const responseData = {
     shareId: newFile.shareId,
-    url: `http://localhost:3000/share/${newFile.shareId}`,
+    url: `${process.env.NEXT_PUBLIC_BASE_URL}/share/${newFile.shareId}`,
     expiresAt: newFile.expiresAt.toLocaleString('en-IN', {
         timeZone: 'Asia/Kolkata',
         dateStyle: 'full',

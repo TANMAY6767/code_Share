@@ -50,7 +50,7 @@ if (alias.length > 20) {
 
   const responseData = {
     shareId: updatedFile.shareId,
-    url: `http://localhost:3000/live/${updatedFile.shareId}`
+    url: `${process.env.NEXT_PUBLIC_BASE_URL}/live/${updatedFile.shareId}`
   };
 
   return send_response(true, responseData, "Alias updated successfully", StatusCodes.OK);
