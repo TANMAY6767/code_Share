@@ -18,23 +18,60 @@ const ShareModal = ({ onClose, shareId }) => {
     }, 300); // Match this with the animation duration
   };
 
-  const copyUrl = (id) => {
-    const urlToCopy = id === 'defaultUrl' ? defaultUrl : customUrl;
-    if (!urlToCopy) {
-      setError('No URL to copy');
-      return;
-    }
+const copyUrl = (id) => {
+  const urlToCopy = id === 'defaultUrl' ? defaultUrl : customUrl;
 
-    navigator.clipboard.writeText(urlToCopy)
-      .then(() => {
-        setSuccess('URL copied to clipboard!');
-        setTimeout(() => setSuccess(''), 3000);
-      })
-      .catch(() => {
-        setError('Failed to copy URL');
-        setTimeout(() => setError(''), 3000);
-      });
-  };
+  if (!urlToCopy) {
+    setError('No URL to copy');
+    return;
+  }
+
+  try {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(urlToCopy)
+        .then(() => {
+          setSuccess('URL copied to clipboard!');
+          setTimeout(() => setSuccess(''), 3000);
+        })
+        .catch(() => {
+          fallbackCopy(urlToCopy);
+        });
+    } else {
+      fallbackCopy(urlToCopy);
+    }
+  } catch (err) {
+    fallbackCopy(urlToCopy);
+  }
+};
+
+// ✅ Fallback for unsupported browsers (mobile, Safari, etc.)
+const fallbackCopy = (text) => {
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';  // Prevent scrolling to bottom
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textarea);
+
+    if (successful) {
+      setSuccess('URL copied to clipboard!');
+    } else {
+      setError('Copy failed. Please copy manually.');
+    }
+  } catch {
+    setError('Copy not supported. Please copy manually.');
+  }
+
+  setTimeout(() => {
+    setSuccess('');
+    setError('');
+  }, 3000);
+};
+
 
   const generateShareLink = async () => {
   setError('');

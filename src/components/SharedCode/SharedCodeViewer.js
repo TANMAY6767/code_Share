@@ -6,14 +6,14 @@ import ReadOnlyCodeViewer from './Read-only/ReadOnlyCodeViewer';
 
 export default function SharedCodeViewer({ file, loading, error, router }) {
   if (loading) {
-    return <LoadingState />;
+    return <LoadingState file={file}/>;
   }
 
   if (error || !file) {
     return <ErrorState router={router} />;
   }
 
-  if (file.type === "editable") {
+  if (file.project.type === "editable") {
     return <EditableCodeViewer file={file} router={router} />;
   }
 

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { faTimes, faCopy, faLink } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
+import { X, Copy, Link as LinkIcon } from 'lucide-react';
+
 const ShareModal = ({ onClose, shareId }) => {
   const [defaultUrl, setDefaultUrl] = useState(`${process.env.NEXT_PUBLIC_BASE_URL}/${shareId}`);
   const [customUrl, setCustomUrl] = useState(`${process.env.NEXT_PUBLIC_BASE_URL}/`);
@@ -141,114 +143,105 @@ const ShareModal = ({ onClose, shareId }) => {
   `;
 
   return (
-    <>
-      <style>{styles}</style>
-      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
-        <div
-          className={`bg-gray-800 rounded-xl shadow-2xl border border-gray-700 w-full max-w-2xl mx-4 ${isClosing ? 'mac-close' : 'mac-open'
-            }`}
-        >
-          <div className="flex justify-between items-center p-6 border-b border-gray-700">
-            <h2 className="text-xl font-semibold text-white">Share Your Code</h2>
-            <button
-              className="text-gray-400 hover:text-white p-2 rounded-md hover:bg-gray-700 transition-colors"
-              onClick={handleClose}
-            >
-              <FontAwesomeIcon icon={faTimes} className="text-lg" />
-            </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xl">
+      <div className="bg-slate-800/80 backdrop-blur-2xl rounded-2xl border border-slate-700/50 w-full max-w-2xl mx-4 shadow-2xl overflow-hidden">
+        <div className="flex justify-between items-center p-6 border-b border-slate-700/50">
+          <h2 className="text-xl font-semibold text-white">Share Your Code</h2>
+          <button
+            className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-700/50 transition-colors"
+            onClick={handleClose}
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="space-y-8 mb-8">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Default URL</h3>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  id="defaultUrl"
+                  readOnly
+                  className="flex-1 px-4 py-3 bg-slate-900/50 text-white border border-slate-700/50 rounded-xl font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  value={defaultUrl}
+                />
+                <button
+                  className="p-3 bg-slate-700/50 hover:bg-slate-700 text-white rounded-xl transition-all"
+                  onClick={() => copyUrl('defaultUrl')}
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-white">Custom URL</h3>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  id="customUrl"
+                  placeholder="Enter custom URL slug"
+                  className="flex-1 px-4 py-3 bg-slate-900/50 text-white border border-slate-700/50 rounded-xl font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  value={customUrl}
+                  onChange={(e) => {
+                    const base = `${process.env.NEXT_PUBLIC_BASE_URL}/`;
+                    const inputValue = e.target.value;
+
+                    if (!inputValue.startsWith(base)) return;
+                    const alias = inputValue.slice(base.length).replace(/\s/g, '');
+                    setCustomUrl(`${base}${alias}`);
+                  }}
+                />
+                <button
+                  className="p-3 bg-slate-700/50 hover:bg-slate-700 text-white rounded-xl transition-all"
+                  onClick={() => copyUrl('customUrl')}
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+              <small className="block text-slate-400 text-sm">
+                Custom URLs must contain only letters, numbers, and hyphens
+              </small>
+              {error && <div className="text-red-400 text-sm mt-1">{error}</div>}
+              {success && <div className="text-emerald-400 text-sm mt-1">{success}</div>}
+            </div>
           </div>
 
-          <div className="p-8">
-            <div className="space-y-8 mb-8">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Default URL</h3>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    id="defaultUrl"
-                    readOnly
-                    className="flex-1 px-4 py-3 bg-gray-900 text-white border-2 border-gray-700 rounded-md font-mono text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                    value={defaultUrl}
-                    onChange={(e) => setDefaultUrl(e.target.value)}
-                  />
-                  <button
-                    className="px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-md text-sm transition-colors"
-                    onClick={() => copyUrl('defaultUrl')}
-                  >
-                    <FontAwesomeIcon icon={faCopy} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Custom URL</h3>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    id="customUrl"
-                    placeholder="Enter custom URL slug"
-                    className="flex-1 px-4 py-3 bg-gray-900 text-white border-2 border-gray-700 rounded-md font-mono text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-                    value={customUrl}
-                    onChange={(e) => {
-                      const base = `${process.env.NEXT_PUBLIC_BASE_URL}/`;
-                      const inputValue = e.target.value;
-
-                      // Prevent deleting base
-                      if (!inputValue.startsWith(base)) return;
-
-                      // Extract alias part only
-                      const alias = inputValue.slice(base.length).replace(/\s/g, '');
-                      setCustomUrl(`${base}${alias}`);
-                    }}
-                  />
-                  <button
-                    className="px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-md text-sm transition-colors"
-                    onClick={() => copyUrl('customUrl')}
-                  >
-                    <FontAwesomeIcon icon={faCopy} />
-                  </button>
-                </div>
-                <small className="block text-gray-400 text-sm">
-                  Custom URLs must be unique and contain only letters, numbers, and hyphens
-                </small>
-                {error && <div className="text-red-400 text-sm mt-1">{error}</div>}
-                {success && <div className="text-green-400 text-sm mt-1">{success}</div>}
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-4 pt-8 border-t border-gray-700">
-              <button
-                className={`px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md flex items-center gap-2 transition-colors ${isLoading ? 'opacity-70 pointer-events-none' : ''
-                  }`}
-                onClick={generateShareLink}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faLink} />
-                    Generate Link
-                  </>
-                )}
-              </button>
-              <button
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors"
-                onClick={handleClose}
-              >
-                Close
-              </button>
-            </div>
+          <div className="flex justify-end gap-4 pt-8 border-t border-slate-700/50">
+            <button
+              className={`px-4 py-2 bg-gradient-to-r from-indigo-500 to-cyan-500 text-white rounded-xl flex items-center gap-2 transition-all hover:shadow-lg hover:shadow-cyan-500/20 ${
+                isLoading ? 'opacity-70 pointer-events-none' : ''
+              }`}
+              onClick={generateShareLink}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <LinkIcon className="w-4 h-4" />
+                  Generate Link
+                </>
+              )}
+            </button>
+            <button
+              className="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-white rounded-xl transition-all"
+              onClick={handleClose}
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
