@@ -378,6 +378,7 @@ const FileExplorer = ({
     const newNode = {
       _id: tempId,
       tempId,
+      
       name: type === 'file' ? 'new-file.js' : 'new-folder',
       type,
       content: type === 'file' ? '// New file' : '',
@@ -398,11 +399,14 @@ const FileExplorer = ({
     } else {
       onUpdateFileStructure([...fileStructure, newNode]);
     }
-
+      if (type === 'file') {
+      onSetCurrentFile(newNode);
+    }
     toast.success(`${type === 'file' ? 'File' : 'Folder'} created!`);
   },
-   [fileStructure, onUpdateFileStructure, fileCount, folderCount]
+   [fileStructure,onSetCurrentFile, onUpdateFileStructure, fileCount, folderCount]
 );
+
 
   const handleDeleteItem = useCallback(
     nodeId => {
@@ -443,24 +447,7 @@ const FileExplorer = ({
     },
     [fileStructure, onUpdateFileStructure, selectedFileId, onSetCurrentFile]
   );
-   const filterTree = useCallback((nodes, term) => {
-    if (!term) return nodes;
-
-    return nodes
-      .map(node => ({ ...node })) // Shallow clone to avoid mutation
-      .filter(node => {
-        const nameMatch = node.name.toLowerCase().includes(term.toLowerCase());
-        let hasMatchingChildren = false;
-
-        if (node.children && node.children.length > 0) {
-          // Recursively filter children
-          node.children = filterTree(node.children, term);
-          hasMatchingChildren = node.children.length > 0;
-        }
-
-        return nameMatch || hasMatchingChildren;
-      });
-  }, []);
+ 
   const filteredFiles = useMemo(() => {
     if (!searchTerm) return fileStructure;
 

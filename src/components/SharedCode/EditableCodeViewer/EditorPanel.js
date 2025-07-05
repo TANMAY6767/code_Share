@@ -34,7 +34,7 @@ export default function CodeEditor({
   const [isTyping, setIsTyping] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const appTheme = useTheme();
-
+    const [lineCharWidth, setLineCharWidth] = useState(4);
   useEffect(() => {
     setWordCount(editorContent.split(/\s+/).filter(word => word.length > 0).length);
   }, [editorContent]);
@@ -60,7 +60,13 @@ export default function CodeEditor({
       }
     });
   };
-
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      setLineCharWidth(2); // Mobile devices
+    } else {
+      setLineCharWidth(4); // Default
+    }
+  }, []);
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
     defineThemes(monaco);
@@ -409,8 +415,12 @@ export default function CodeEditor({
               autoIndent: 'full',
               formatOnPaste: true,
               formatOnType: true,
+              automaticLayout: true,
+                        glyphMargin: false,
+                        lineNumbersMinChars: lineCharWidth,
             }}
-            key={appTheme?.theme}
+             key={currentFile?.permanentId || currentFile?.id || currentFile?.name || 'editor'}
+
             theme={appTheme?.theme === 'dark' ? 'my-dark-theme' : 'my-light-theme'}
           />
         </motion.div>

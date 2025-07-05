@@ -70,10 +70,10 @@ export const PUT = asyncHandler(async (req, { params }) => {
     projectId,
     tempId: node.tempId?.startsWith('temp-') ? node.tempId : undefined
   }));
-  console.log("nodesToCreate", nodesToCreate);
+  // console.log("nodesToCreate", nodesToCreate);
 
   const createdNodes = await ProjectNode.insertMany(nodesToCreate, { session });
-console.log("idMapping", idMapping);
+// console.log("idMapping", idMapping);
 
   // Map tempId to new MongoDB ID
   created.forEach((node, index) => {

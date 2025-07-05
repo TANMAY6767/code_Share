@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Globe, Zap, Crown, Code2, Settings, Menu, X, Share2 } from 'lucide-react';
+import { Sparkles,FolderDown, Globe, Zap, Crown, Code2, Settings, Menu, X, Share2 } from 'lucide-react';
 import FileExplorer from './FileExplorer';
 import CodeEditor from './EditorPanel';
 import ProjectSettings from './ProjectSettings';
@@ -398,7 +398,27 @@ export default function EditableCodeViewer({ file, router }) {
     setDirty(true);
     setFileCount(fileTotal);
     setFolderCount(folderTotal);
-  }, []);
+
+    if (currentFile?.isNew) {
+    const findNewFile = (nodes) => {
+      for (const node of nodes) {
+        if (node._id === currentFile._id) {
+          return node;
+        }
+        if (node.children) {
+          const found = findNewFile(node.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    
+    const updatedFile = findNewFile(newStructure[0].children);
+    if (updatedFile) {
+      setCurrentFile(updatedFile);
+    }
+  }
+  }, [MAX_FILES, MAX_FOLDERS, currentFile]);
 
   const saveChanges = async () => {
     if (!file?.project?.slug) {
@@ -495,12 +515,14 @@ export default function EditableCodeViewer({ file, router }) {
         setFileStructure(newStructure);
 
         if (currentFile?.tempId && newIdMap[currentFile.tempId]) {
-          setCurrentFile(prev => ({
-            ...prev,
-            _id: newIdMap[prev.tempId],
-            tempId: undefined
-          }));
+        const updatedNodes = flattenTree(newStructure[0].children);
+        const updatedFile = updatedNodes.find(n => n._id === newIdMap[currentFile.tempId]);
+        
+        if (updatedFile) {
+          setCurrentFile(updatedFile);
+          setEditorContent(updatedFile.content);
         }
+      }
       }
 
       toast.success('Project saved successfully!');
@@ -535,8 +557,8 @@ export default function EditableCodeViewer({ file, router }) {
       acc.push(flatNode);
 
       if (children && children.length > 0) {
-        acc.push(...flattenTree(children, node._id));
-      }
+      acc.push(...flattenTree(children, node._id));  // Use node._id instead of node.id
+    }
 
       return acc;
     }, []);
@@ -731,10 +753,8 @@ export default function EditableCodeViewer({ file, router }) {
                 whileTap={{ scale: 0.95 }}
                 title="Download Project"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span className="hidden sm:inline">Download</span>
+                <FolderDown className="w-4 h-4" />
+                <span className="hidden sm:inline">Download Project</span>
               </motion.button>
               
               {isMobile && (
