@@ -313,6 +313,7 @@ const FileExplorer = ({
   onSetCurrentFile,
   fileCount, // Add this
   folderCount ,
+   projectName,
   canCreateFile,
   canCreateFolder,
   onClose // New prop for closing the sidebar
@@ -341,6 +342,12 @@ const FileExplorer = ({
     };
   }, []);
 
+  const structuredFiles = useMemo(() => {
+    return fileStructure.map(node => 
+      node.isRoot ? {...node, name: projectName} : node
+    );
+  }, [fileStructure, projectName]);
+  
   const toggleFolder = useCallback(folderId => {
     setExpandedFolders(prev => {
       const newExpanded = new Set(prev);
@@ -449,14 +456,14 @@ const FileExplorer = ({
   );
  
   const filteredFiles = useMemo(() => {
-    if (!searchTerm) return fileStructure;
+    if (!searchTerm) return structuredFiles;
 
-    return fileStructure.filter(
+    return structuredFiles.filter(
       file =>
         file.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (file.children && file.children.some(child => child.name.toLowerCase().includes(searchTerm.toLowerCase())))
     );
-  }, [fileStructure, searchTerm]);
+  }, [structuredFiles, searchTerm]);
 
   const ContextMenu = ({ position, items, onClose }) => {
     if (!position) return null;
@@ -605,7 +612,7 @@ const FileExplorer = ({
         className={`flex-1 overflow-y-auto p-2 backdrop-blur-xl z-50 ${theme === 'dark' ? 'bg-gray-800/90' : 'bg-white/90'
           }`}
       >
-        {(searchTerm ? filteredFiles : fileStructure).map(file => (
+        {(searchTerm ? filteredFiles : structuredFiles).map(file => (
           <FileItem
             key={file._id}
             node={file}

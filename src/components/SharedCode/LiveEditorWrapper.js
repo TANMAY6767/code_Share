@@ -1,6 +1,6 @@
-// src/components/SharedCode/LiveEditorWrapper.js
-"use client";
 
+"use client";
+import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
@@ -23,7 +23,7 @@ const LiveEditorWrapper = ({ shareId ,router}) => {
   const [error, setError] = useState(false);
   
   useEffect(() => {
-    // Use shareId from props if available, otherwise from URL params
+    
     if (!finalShareId && params?.shareId) {
       setFinalShareId(params.shareId);
     }
