@@ -103,7 +103,7 @@ export default function LiveShareModal({
 
     try {
       const res = await fetch(`/api/folder/liveAlias/${shareId}`, {
-        method: 'POST',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ alias: customSlug }),
       });

@@ -18,7 +18,7 @@ export const POST = asyncHandler(async (req) => {
     if (!filename ) {
         return send_response(false, null, "filename and language are required!", StatusCodes.BAD_REQUEST);
     }
-    if (expiresIn && !['1m', '1h', '24h', '2d', '3d'].includes(expiresIn)) {
+    if (expiresIn && !['1m', '1h','3h', '24h', '2d', '3d'].includes(expiresIn)) {
     return send_response(false, null, "Invalid expiresIn value!", StatusCodes.BAD_REQUEST);
 }
     // Create the code file

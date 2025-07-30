@@ -53,6 +53,7 @@ export default function HomePage() {
           filename: 'LiveProject',
           language: 'javascript',
           type: 'editable',
+          expiresIn:"1h",
           content: '// Start coding live...'
         }),
       });

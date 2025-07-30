@@ -9,10 +9,10 @@ const codeBlockSchema = new mongoose.Schema({
     },
     filename: String,
     content: String,
-     // Add index for faster lookups
+    // Add index for faster lookups
     expiresIn: {
         type: String,
-        enum: ['1m', '1h', '24h', '2d', '3d'], // Updated options
+        enum: ['1m', '1h', '3h', '24h', '2d', '3d'], // Updated options with 3h
         default: '1h'
     },
     expiresAt: {
@@ -26,6 +26,7 @@ codeBlockSchema.pre('save', function(next) {
   const durationMap = {
     '1m': 60000,       // 1 minute
     '1h': 3600000,     // 1 hour
+    '3h': 10800000,    // 3 hours (new addition)
     '24h': 86400000,   // 24 hours
     '2d': 172800000,   // 2 days (48 hours)
     '3d': 259200000    // 3 days (72 hours)
@@ -36,6 +37,7 @@ codeBlockSchema.pre('save', function(next) {
   }
   next();
 });
+
 // Add to codeBlockSchema
 codeBlockSchema.statics.updateContent = async function (shareId, content) {
   return this.findOneAndUpdate(
@@ -44,7 +46,9 @@ codeBlockSchema.statics.updateContent = async function (shareId, content) {
     { new: true, select: 'content' }
   );
 };
+
 codeBlockSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
 codeBlockSchema.statics.generateShareId = async function () {
     const generateId = () => Math.random().toString(36).substring(2, 10);
     let shareId = generateId();
@@ -57,4 +61,5 @@ codeBlockSchema.statics.generateShareId = async function () {
 
     return shareId;
 };
+
 export const CodeBlock = mongoose.models.CodeBlock || mongoose.model("CodeBlock", codeBlockSchema);

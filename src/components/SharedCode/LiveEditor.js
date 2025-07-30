@@ -1,12 +1,12 @@
 "use client";
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import LiveShareModal from './Modal/LiveShareModal';
 import LoadingState from './Error-Loading/LoadingState';
 import { toast } from 'sonner';
 import { useTheme } from '@/contexts/ThemeContext';
-
+import ExpiryModal from "./ExpiryModal"
 const CopyIcon = ({ theme }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24"
     stroke={theme === 'dark' ? '#e2e8f0' : '#1e293b'}>
@@ -28,16 +28,140 @@ const ShareIcon = ({ theme }) => (
   </svg>
 );
 
-const LiveEditor = ({ shareId, file, router }) => {
+// Countdown Components
+const CountdownDigit = ({ value, colorClass }) => (
+  <div className="relative w-4 overflow-hidden text-center">
+    <AnimatePresence mode="popLayout">
+      <motion.span
+        key={value}
+        className={`block font-mono font-medium ${colorClass}`}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 20, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        {value}
+      </motion.span>
+    </AnimatePresence>
+  </div>
+);
+
+const CountdownSegment = ({ value, label, colorClass, visible = true }) => {
+  if (!visible) return null;
+
+  return (
+    <div className="flex items-baseline">
+      <CountdownDigit value={value.toString().padStart(2, '0')} colorClass={colorClass} />
+      <span className={`text-xs ${colorClass}`}>{label}</span>
+    </div>
+  );
+};
+
+const ExpiryCountdown = ({ expiresAt, theme }) => {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+    expired: false
+  });
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      if (!expiresAt) {
+        return { expired: false, days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
+
+      const now = new Date();
+      const expirationDate = new Date(expiresAt);
+      const diff = expirationDate - now;
+
+      if (diff <= 0) {
+        return { expired: true, days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
+
+      return {
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((diff % (1000 * 60)) / 1000),
+        expired: false
+      };
+    };
+
+    const update = () => setTimeLeft(calculateTimeLeft());
+    update();
+    const intervalId = setInterval(update, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [expiresAt]);
+
+  const getColorClass = () => {
+    if (timeLeft.expired) {
+      return theme === 'dark' ? 'text-red-400' : 'text-red-500';
+    }
+
+    const totalHours = timeLeft.days * 24 + timeLeft.hours;
+    if (totalHours > 24) return theme === 'dark' ? 'text-green-400' : 'text-green-500';
+    if (totalHours > 1) return theme === 'dark' ? 'text-yellow-400' : 'text-yellow-500';
+    return theme === 'dark' ? 'text-red-400' : 'text-red-500';
+  };
+
+  if (!expiresAt) return null;
+
+  return (
+    <div className="flex items-center">
+      {timeLeft.expired ? (
+        <motion.span
+          className={getColorClass()}
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 500 }}
+        >
+          Expired
+        </motion.span>
+      ) : (
+        <div className="flex items-center space-x-1">
+          <CountdownSegment
+            value={timeLeft.days}
+            label="d"
+            colorClass={getColorClass()}
+            visible={timeLeft.days > 0}
+          />
+          <CountdownSegment
+            value={timeLeft.hours}
+            label="h"
+            colorClass={getColorClass()}
+          />
+          <CountdownSegment
+            value={timeLeft.minutes}
+            label="m"
+            colorClass={getColorClass()}
+          />
+          <div className="flex items-baseline">
+            <CountdownDigit value={timeLeft.seconds.toString().padStart(2, '0')} colorClass={getColorClass()} />
+            <span className={`text-xs ${getColorClass()}`}>s</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const LiveEditor = ({ shareId, file: initialFile, router }) => {
   const { theme } = useTheme();
+  const [file, setFile] = useState(initialFile); 
   const [content, setContent] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef(null);
   const [fileName, setFileName] = useState(file?.filename || '');
   const [copied, setCopied] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [lineCharWidth, setLineCharWidth] = useState(4);
 
+  const [isExpiryModalOpen, setIsExpiryModalOpen] = useState(false);
+  const [selectedExpiry, setSelectedExpiry] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [lineCharWidth, setLineCharWidth] = useState(4);
   const themeClasses = {
     container: theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-300 text-gray-900',
     editorContainer: 'bg-gray-800 border-gray-700',
@@ -56,7 +180,12 @@ const LiveEditor = ({ shareId, file, router }) => {
       'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' :
       'bg-indigo-500/10 text-indigo-600 border-indigo-500/20'
   };
-
+  const ChangeExpiryIcon = ({ theme }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24"
+      stroke={theme === 'dark' ? '#e2e8f0' : '#1e293b'}>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 640) {
       setLineCharWidth(2); // Mobile devices
@@ -126,7 +255,13 @@ const LiveEditor = ({ shareId, file, router }) => {
     element.click();
     document.body.removeChild(element);
   };
-
+   const handleExpiryUpdate = (newExpiryData) => {
+    setFile(prev => ({
+      ...prev,
+      expiresIn: newExpiryData.expiresIn,
+      expiresAt: newExpiryData.expiresAt
+    }));
+  };
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -150,6 +285,15 @@ const LiveEditor = ({ shareId, file, router }) => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsExpiryModalOpen(true)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${themeClasses.button.base}`}
+              >
+                <ChangeExpiryIcon theme={theme} />
+                <span className="text-sm sm:text-base">Change Expiry</span>
+              </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -198,9 +342,18 @@ const LiveEditor = ({ shareId, file, router }) => {
                       </div>
                       <div className="font-mono text-xs sm:text-sm opacity-75">~/</div>
                     </div>
-                    <div>
-                      <div className={`px-2 py-0.5 sm:px-3 sm:py-1 text-xs rounded-full border font-mono ${themeClasses.badge}`}>
-                        EDITOR
+
+                    {/* Added expiry counter here */}
+                    <div className="flex items-center space-x-3">
+                      {file?.expiresAt && (
+                        <div className="flex items-center text-xs sm:text-sm">
+                          <ExpiryCountdown expiresAt={file.expiresAt} theme={theme} />
+                        </div>
+                      )}
+                      <div>
+                        <div className={`px-2 py-0.5 sm:px-3 sm:py-1 text-xs rounded-full border font-mono ${themeClasses.badge}`}>
+                          EDITOR
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -239,6 +392,15 @@ const LiveEditor = ({ shareId, file, router }) => {
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
           shareId={file.shareId}
+        />
+      )}
+      {isExpiryModalOpen && (
+        <ExpiryModal
+          isOpen={isExpiryModalOpen}
+          onClose={() => setIsExpiryModalOpen(false)}
+          shareId={file.shareId}
+          currentExpiry={file.expiresIn}
+          onExpiryUpdate={handleExpiryUpdate} // Pass the callback
         />
       )}
     </motion.div>
